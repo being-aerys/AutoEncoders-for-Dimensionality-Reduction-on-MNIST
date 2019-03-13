@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
 from torchvision.utils import save_image
+import numpy
 
 if not os.path.exists('./autoencoder_img'):
     os.mkdir('./autoencoder_img')
@@ -99,6 +100,7 @@ optimizer = torch.optim.Adam(
     model.parameters(), lr=learning_rate, weight_decay=1e-5)
 
 for epoch in range(num_epochs):
+    print("Epoch Number: ",epoch)
     for data in dataloader:
 
 
@@ -111,7 +113,9 @@ for epoch in range(num_epochs):
         # ===================forward=====================
         output = model(img)
 
-
+        print("original image ", img)
+        print("output image", output)
+        #torch.all(torch.lt(torch.abs(torch.add(output -img)), 1e-12))
         loss = criterion(output, img)
         # ===================backward====================
         optimizer.zero_grad()

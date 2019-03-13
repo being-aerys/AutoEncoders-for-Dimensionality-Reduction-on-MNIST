@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
 from torchvision.utils import save_image
+import functools
+import operator
 
 if not os.path.exists('./autoencoder_img'):
     os.mkdir('./autoencoder_img')
@@ -16,15 +18,21 @@ if not os.path.exists('./autoencoder_img'):
 num_epochs = 100
 batch_size = 64
 learning_rate = 1e-3
-img_transform = transforms.Compose([
-    transforms.ToTensor()
-    #-------------------------------------we do not want to normalize
-])
-dataset = None # get data
+img_transform = transforms.Compose([transforms.ToTensor()])    #-------------------------------------we do not want to normalize
 
+
+#------------------------Unroll the joint state list of lists into a single list
+joint_state_list_of_lists = []
+joint_state_list_of_lists = functools.reduce(operator.iconcat, joint_state_list_of_lists, [])
+
+size_of_input_dimension_of_joint_state = len(joint_state_list_of_lists)
+
+#---------------------------get data
+dataset = None #
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-size_of_input_dimension_of_joint_state = 4000
+
+
 
 
 class autoencoder_custom(nn.Module):
@@ -83,33 +91,25 @@ class autoencoder_custom(nn.Module):
 
 
 model = autoencoder_custom().cuda()
-criterion = nn.MSE()#-----------------------------------------------Which loss to use, L1 or MSE
-optimizer = torch.optim.Adam(
-    model.parameters(), lr=learning_rate, weight_decay=1e-5)
+criterion = nn.L1Loss()#-----------------------------------------------Which loss to use, L1 or MSE, L1 loss makes more sense because we do not have outliers in our data
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
 
 for epoch in range(num_epochs):
     for sample in dataloader:
-
-
-
-        #
-
-
         sample = Variable(sample).cuda()
-        # ===================forward=====================
+        # ----------------------------------------------forward
         output = model(sample)
 
+        # print("original image ", sample)
+        # print("output image", output)
 
         loss = criterion(output, sample)#------------------take care of the order of the sample and the output
-        # ===================backward====================
+
+        # ----------------------------------------------backward
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     # ===================log========================
-    print('epoch [{}/{}], loss:{:.4f}'
-          .format(epoch + 1, num_epochs, loss.data.item()))
-    # if epoch % 10 == 0:
-    #     pic = to_img(output.cpu().data)
-    #     save_image(pic, './mlp_img/image_{}.png'.format(epoch))
+    print('epoch [{}/{}], loss:{:.4f}'.format(epoch + 1, num_epochs, loss.data.item()))
 
 torch.save(model.state_dict(), './vanilla_autoencoder_for_rd.pth')
