@@ -27,7 +27,7 @@ img_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5,), (0.5,))#-----------dont forget the commas
 ])
-dataset = MNIST('./data', transform=img_transform, download=True)
+dataset = MNIST('../data', transform=img_transform, download=True)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 
