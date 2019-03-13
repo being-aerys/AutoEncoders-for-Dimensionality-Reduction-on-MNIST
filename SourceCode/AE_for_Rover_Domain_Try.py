@@ -18,19 +18,19 @@ batch_size = 64
 learning_rate = 1e-3
 img_transform = transforms.Compose([
     transforms.ToTensor()
-    #,    transforms.Normalize((0.5,), (0.5,))#-----------dont forget the commas, dont use normalization
+    #-------------------------------------we do not want to normalize
 ])
 dataset = None # get data
 
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-input_dimension_of_joint_state = 4000
+size_of_input_dimension_of_joint_state = 4000
 
 
 class autoencoder_custom(nn.Module):
     def __init__(self):
         super(autoencoder_custom, self).__init__()
-        self.encoder_linear1 = nn.Linear( input_dimension_of_joint_state, 512) #in features, out features
+        self.encoder_linear1 = nn.Linear(size_of_input_dimension_of_joint_state, 512) #in features, out features
         self.encoder_relu1 = nn.LeakyReLU()
         self.encoder_linear2 = nn.Linear(512, 256)
         self.encoder_relu2 = nn.LeakyReLU()
@@ -38,12 +38,10 @@ class autoencoder_custom(nn.Module):
         self.encoder_relu3 = nn.LeakyReLU()
         self.encoder_linear_4 = nn.Linear(128, 64)
         self.encoder_relu4 = nn.LeakyReLU()
-
-
-        self.encoder_linear5 = nn.Linear(64, 32)  # in features, out features
+        self.encoder_linear5 = nn.Linear(64, 32)
         self.encoder_relu5 = nn.LeakyReLU()
 
-
+        #------------------------------------------Encoder ends here
 
         self.decoder_linear1 = nn.Linear(32, 64)
         self.decoder_relu1 = nn.LeakyReLU()
@@ -53,7 +51,7 @@ class autoencoder_custom(nn.Module):
         self.decoder_relu3 = nn.LeakyReLU()
         self.decoder_linear4 = nn.Linear(256, 512)
         self.decoder_relu4 = nn.LeakyReLU()
-        self.decoder_linear_op = nn.Linear(512, input_dimension_of_joint_state)
+        self.decoder_linear_op = nn.Linear(512, size_of_input_dimension_of_joint_state)
 
 
     def forward(self, x):
@@ -85,7 +83,7 @@ class autoencoder_custom(nn.Module):
 
 
 model = autoencoder_custom().cuda()
-criterion = nn.L1Loss()
+criterion = nn.MSE()#-----------------------------------------------Which loss to use, L1 or MSE
 optimizer = torch.optim.Adam(
     model.parameters(), lr=learning_rate, weight_decay=1e-5)
 
@@ -102,7 +100,7 @@ for epoch in range(num_epochs):
         output = model(sample)
 
 
-        loss = criterion(output, sample)
+        loss = criterion(output, sample)#------------------take care of the order of the sample and the output
         # ===================backward====================
         optimizer.zero_grad()
         loss.backward()

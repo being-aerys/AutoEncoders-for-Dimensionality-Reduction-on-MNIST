@@ -94,7 +94,7 @@ class autoencoder_custom(nn.Module):
 
 
 model = autoencoder_custom().cuda()
-criterion = nn.L1Loss()
+criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(
     model.parameters(), lr=learning_rate, weight_decay=1e-5)
 
