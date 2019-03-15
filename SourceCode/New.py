@@ -27,129 +27,79 @@ learning_rate = 1e-3
 img_transform = transforms.Compose([transforms.ToTensor()])    #-------------------------------------we do not want to normalize
 
 
-#------------------------Unroll the joint state list of lists into a single list
-# joint_state_list_of_lists = []
-# joint_state_list_of_lists = functools.reduce(operator.iconcat, joint_state_list_of_lists, [])
-#
-# size_of_input_dimension_of_joint_state = len(joint_state_list_of_lists)
 
-#---------------------------get data
-
-# with open("csv_for_joint_states.csv","r") as readfile:
-#     reader = csv.reader(readfile)
-
-
-
-
-myfilename = "../data/rover_domain_datasets/data_4_10_20.txt"
+myfilename = "../data/data_4_10_20.txt"
 f=open(myfilename,'r')
 line = f.readline()
 line_cnt = 1
 states=[]
 temp_line=[]
+temp_line_for_1_state = []
+updating_string = []
+count = 0
+demo_string = ""
 while line:
-    line = line.replace('[', "")
-    line = line.replace('\n', "")
-    line = line.replace(']', "")
-    line = line.split()
 
-    for item in line:
-        temp_line.append(item)
 
-    if line_cnt%7 == 0:
-        states.append(temp_line)
-        temp_line=[]
+    updating_string.append(demo_string + line)
+
+    #print(temp_line)
+    # time.sleep(222)
+
+    if ("]" in line):
+        print("inside")
+
+        updating_string[count] = updating_string[count].replace("[","")
+        updating_string[count] = updating_string[count].replace("\n","")
+        updating_string[count] = updating_string[count].replace("]","")
+        updating_string[count] = updating_string[count].split()
+        # temp_line = [x for x in temp_line if x != "["]
+        # temp_line = [x for x in temp_line if x != "]"]
+        # temp_line = [x for x in temp_line if x != "\n"]
+        # temp_line = [x for x in temp_line if x != " "]
+
+
+        temp_line_for_1_state.append(updating_string[count])
+        print(temp_line_for_1_state)
+
+        print()
+        count = count + 1
 
     line = f.readline()
+
     line_cnt += 1
 
-#print(len(states[0]))
-# for i in range(3333):
-    # print(states[i])
-    # time.sleep(2666)
+print("len(states) ",len(states))
+for i in range(len(states)):
 
-#---------------------------------Write the joint state spaces into a CSV
-#
-# with open('csv_for_joint_states.csv', 'w', newline='') as csvfile: #-----------------index = False nagare feri index pani banaidinxa
-#     writer = csv.writer(csvfile)
-#     writer.writerows(states)
-# reader = []
-
-#
-# data_without_index = states.to_csv('csv_for_joint_states_new.csv',mode = 'w', index=False)
-#
-# #----------------------------------Read the joint state spaces from the csv
-# with open("csv_for_joint_states.csv_new","r") as readfile:
-#     reader = csv.reader(readfile)
-#
-#     # for index,data in enumerate(reader):
-#     #      print(index,data)
-#     #      time.sleep(5)
-#
-# print(reader[0])
-# time.sleep(5)
-#
-#training_dataset = pd.read_csv('csv_for_joint_states.csv')
-
-##dataset = None #
-#a = np.array(states)
-#print(a[0])
-#
-
+    if(len(states[i]) != 40):
+        print((states[i]))
+        print("i is  ", i)
+time.sleep(333)
+#convert a list of lists into a list of numpy arrays
 # states = np.array(states)
+# print(type(states[0]))
+
+# states_array = np.asarray(states)
+states_list_x_of_nparrays = []
+states_list_y = []
+for item in range(len(states)):
+    states_list_x_of_nparrays.append(np.asarray(states[item], dtype=np.float32))
+
+for item in range(len(states)):#-------------------------------------------------works as lable, need to provide to make a data set
+    states_list_y.append(np.asarray([0], dtype=np.float32))
 
 
-states = np.array(states)
-a = list(states)
+for i in range(len(states_list_x_of_nparrays)):
+    if(len(states_list_x_of_nparrays[i]) != 40):
+        print(len(states_list_x_of_nparrays[i]))
 
 
-my_x = [a] # a list of numpy arrays
-my_y = [np.zeros(len(states))] # another list of numpy arrays (targets)
-
-tensor_x = torch.stack([torch.Tensor(i) for i in a]) # transform to torch tensors
-tensor_y = torch.stack([torch.Tensor(i) for i in my_y])
-time.sleep(222)
-my_dataset = utils.TensorDataset(tensor_x,tensor_y) # create your datset
-my_dataloader = utils.DataLoader(my_dataset) # create your dataloader
+tensor_x = torch.stack([torch.Tensor(i) for i in states_list_x_of_nparrays]) # transform to torch tensors
+tensor_y = torch.stack([torch.Tensor(i) for i in states_list_y])
 
 
 
-
-
-
-
-# #time.sleep(44)
-# # y_vals = np.zeros(len(states))
-# x_in_dataset = []
-# #y_in_dataset = []
-# y_in_dataset[] = .append(np.array([0.], dtype = float))
-
-for i in range(len(states)): # one lakh ota i
-
-    x_in_dataset.append(np.array([states[i]], dtype= float))
-    # print(x_in_dataset)
-    # print("\n")
-    # time.sleep(5)
-    y_in_dataset.append(np.array([0.], dtype = float))
-
-# my_x = [states] # a list of numpy arrays
-# my_y = [np.array([4.]), np.array([2.])] # another list of numpy arrays (targets)
-
-
-#print(len(x_in_dataset))
-#time.sleep(222)
-#x_in_dataset = [np.array([[1.0, 2], [3, 4]]), np.array([[5., 6], [7, 8]])] # a list of numpy arrays
-#y_in_dataset = [np.array([4.]), np.array([2.])] # another list of numpy arrays (targets)
-#print(torch.Tensor(x_in_dataset[2]))
-#time.sleep(5)
-
-# tensor_x = torch.stack([torch.Tensor(i) for i in x_in_dataset]) # transform to torch tensors
-# time.sleep(5)
-# tensor_y = torch.stack([torch.Tensor(i) for i in y_in_dataset])
-
-print(x_in_dataset[2])
-# tensor_x = torch.FloatTensor(x_in_dataset)
-# tensor_y = torch.FloatTensor(y_in_dataset)
 custom_dataset = utils.TensorDataset(tensor_x, tensor_y) # create your datset
 time.sleep(5)
 custom_dataloader = utils.DataLoader(dataset=custom_dataset,batch_size = 1,shuffle = True) # create your dataloader

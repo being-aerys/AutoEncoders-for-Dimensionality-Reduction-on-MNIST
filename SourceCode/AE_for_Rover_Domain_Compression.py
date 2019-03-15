@@ -29,7 +29,7 @@ img_transform = transforms.Compose([
     #,    transforms.Normalize((0.5,), (0.5,))#-----------dont forget the commas, dont use normalization
 ])
 dataset = MNIST('../data', transform=img_transform, download=True)
-#print("dataset shape ",len(dataset))
+print("dataset shape ",(dataset[0]))
 import time
 #time.sleep(111)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -103,7 +103,8 @@ for epoch in range(num_epochs):
     print("Epoch Number: ",epoch)
     for data in dataloader:
 
-
+        print("data shape ",data.shape)
+        time.sleep(22)
         img, _ = data
         #
         img = img.view(img.size(0), -1)
