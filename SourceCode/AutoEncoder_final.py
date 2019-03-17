@@ -84,36 +84,56 @@ custom_dataloader = utils.DataLoader(dataset=custom_dataset,batch_size = batch_s
 class AutoEncoder(nn.Module):
     def __init__(self):
         super(AutoEncoder, self).__init__()
-        self.encoder = nn.Sequential(nn.Linear(len(states[0]), 512),
+        # self.encoder = nn.Sequential(nn.Linear(len(states[0]), 512),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(512, 256),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(256, 128),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(128, 64),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(64, 32),
+        #                              nn.LeakyReLU()#------------------------------------------Encoder ends here
+        #
+        #                              )
+
+        self.encoder = nn.Sequential(nn.Linear(len(states[0]),30),
                                      nn.LeakyReLU(),
-                                     nn.Linear(512, 256),
+                                     nn.Linear(30, 20),
                                      nn.LeakyReLU(),
-                                     nn.Linear(256, 128),
+                                     nn.Linear(20, 10),
                                      nn.LeakyReLU(),
-                                     nn.Linear(128, 64),
-                                     nn.LeakyReLU(),
-                                     nn.Linear(64, 32),
-                                     nn.LeakyReLU()#------------------------------------------Encoder ends here
+                                     # nn.Linear(128, 64),
+                                     # nn.LeakyReLU(),
+                                     # nn.Linear(64, 32),
+                                     # nn.LeakyReLU()  # ------------------------------------------Encoder ends here
 
                                      )
 
-
-
-        self.decoder = nn.Sequential(nn.Linear(32, 64),
+        # self.decoder = nn.Sequential(nn.Linear(32, 64),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(64, 128),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(128, 256),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(256, 512),
+        #                              nn.LeakyReLU(),
+        #                              nn.Linear(512, len(states[0]))#------------------------------------------Decoder ends here
+        #
+        #
+        # )
+        self.decoder = nn.Sequential(nn.Linear(10, 20),
                                      nn.LeakyReLU(),
-                                     nn.Linear(64, 128),
+                                     nn.Linear(20, 30),
                                      nn.LeakyReLU(),
-                                     nn.Linear(128, 256),
-                                     nn.LeakyReLU(),
-                                     nn.Linear(256, 512),
-                                     nn.LeakyReLU(),
-                                     nn.Linear(512, len(states[0]))#------------------------------------------Decoder ends here
+                                     nn.Linear(30, len(states[0])),
+                                     # nn.LeakyReLU(),
+                                     # nn.Linear(256, 512),
+                                     # nn.LeakyReLU(),
+                                     # nn.Linear(512, len(states[0]))
+                                     # # ------------------------------------------Decoder ends here
 
-
-        )
-
-
-
+                                     )
 
     def forward(self, x):
 
@@ -138,8 +158,8 @@ for epoch in range(num_epochs):
         output = model(features_of_a_batch)
         #check how good the model was at the end of every epoch
         if(index == len(custom_dataloader)-1):
-            print("In the original data, 1st element of the last batch: ",features_of_a_batch[0])
-            print("Predicted Values to compare: ",output[0])
+            print("In the original data, 1st element of the last batch: ",features_of_a_batch[1])
+            print("Predicted Values to compare: ",output[1])
 
 
         loss = criterion(output, features_of_a_batch)#------------------take care of the order of the output and the sample
