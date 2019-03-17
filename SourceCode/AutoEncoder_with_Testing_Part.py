@@ -14,14 +14,15 @@ num_epochs = 100
 batch_size = 64
 learning_rate = 1e-3
 img_transform = transforms.Compose([transforms.ToTensor()])    #-------------------------------------we do not want to normalize
+training_loss = 0
+testing_loss = 0
 
 
-
-myfilename = "../data/Training_Data.txt"
+myfilename = "../data/data_4_10_20_new.txt"
 f=open(myfilename,'r')
 line = f.readline()
 line_cnt = 1
-states=[]
+states = []
 temp_line=[]
 temp_line_for_1_state = []
 updating_string = []
@@ -52,40 +53,61 @@ while line:
 
 del updating_string[-1]     #removing the "a" added at the end of the loop above
 states = updating_string
+length_of_total_states = len(states)
+print("The total number of states is ",length_of_total_states)
+training_states = states[:int(length_of_total_states * 0.9)]
+testing_states = states[int(length_of_total_states * 0.9):]
 
+#------------------------------------Check if the data is inconsistent
+for i in range(len(training_states)):
 
-for i in range(len(states)):
-
-    if(len(states[i]) != 40):
+    if(len(training_states[i]) != 40):
         #print(len(states[i]))
-        print("Not all joint states have the same number of elements. Position ", i," has inconsistent data.")
+        print("Training data error: Not all joint states have the same number of elements. Position ", i," has inconsistent data.")
 
-#convert a list of lists into a list of numpy arrays
+for i in range(len(testing_states)):
 
-states_list_x_of_nparrays = []
-states_list_y = []
-for item in range(len(states)):
+    if(len(testing_states[i]) != 40):
+        #print(len(states[i]))
+        print("Testing data error: Not all joint states have the same number of elements. Position ", i," has inconsistent data.")
 
-    states_list_x_of_nparrays.append(np.asarray(states[item], dtype=np.float32))
-
-for item in range(len(states)):#-------------------------------------------------works as lable, need to provide to make a data set
-    states_list_y.append(np.asarray([0], dtype=np.float32))
+#--------------------------------------convert a list of lists into a list of numpy arrays to build a custom dataset for pytorch
 
 
-tensor_x = torch.stack([torch.Tensor(i) for i in states_list_x_of_nparrays]) # transform to torch tensors
-tensor_y = torch.stack([torch.Tensor(i) for i in states_list_y])
+def states_list(states_input):
+    states_list_x = []
+    states_list_y = []
 
+    for item in range(len(states_input)):
+
+        states_list_x.append(np.asarray(states_input[item], dtype=np.float32))
+
+    for item in range(len(states_input)):#-------------------------------------------------works as lable, need to provide to make a data set
+        states_list_y.append(np.asarray([0], dtype=np.float32))
+    return states_list_x, states_list_y
+
+training_states_list_x, training_states_list_y = states_list(training_states)
+testing_states_list_x, testing_states_list_y = states_list(testing_states)
+# print(length_of_total_states)
+# print(len(training_states_list_x))
+# print(len(testing_states_list_x))
+training_tensor_x = torch.stack([torch.Tensor(i) for i in training_states_list_x]) # transform to torch tensors
+training_tensor_y = torch.stack([torch.Tensor(i) for i in training_states_list_y])
+testing_tensor_x = torch.stack([torch.Tensor(i) for i in testing_states_list_x]) # transform to torch tensors
+testing_tensor_y = torch.stack([torch.Tensor(i) for i in testing_states_list_y]) # transform to torch tensors
 #tensor_x is a list of lists.
 #tensor_x[0] has a length of 40
 
-custom_dataset = utils.TensorDataset(tensor_x, tensor_y) # create your datset
-custom_dataloader = utils.DataLoader(dataset=custom_dataset,batch_size = batch_size,shuffle = True) # create your dataloader
+custom_training_dataset = utils.TensorDataset(training_tensor_x, training_tensor_y) # create your datset
+custom_training_dataloader = utils.DataLoader(dataset=custom_training_dataset,batch_size = batch_size,shuffle = True) # create your dataloader
 
+custom_testing_dataset = utils.TensorDataset(testing_tensor_x, testing_tensor_y) # create your datset
+custom_testing_dataloader = utils.DataLoader(dataset=custom_testing_dataset,batch_size = batch_size,shuffle = True)
 
 class AutoEncoder(nn.Module):
     def __init__(self):
         super(AutoEncoder, self).__init__()
-        self.encoder = nn.Sequential(nn.Linear(len(states[0]), 512),
+        self.encoder = nn.Sequential(nn.Linear(len(training_states[0]), 512),
                                      nn.LeakyReLU(),
                                      nn.Linear(512, 256),
                                      nn.LeakyReLU(),
@@ -129,7 +151,7 @@ class AutoEncoder(nn.Module):
                                      nn.LeakyReLU(),
                                      nn.Linear(256, 512),
                                      nn.LeakyReLU(),
-                                     nn.Linear(512, len(states[0]))#------------------------------------------Decoder ends here
+                                     nn.Linear(512, len(training_states[0]))#------------------------------------------Decoder ends here
 
 
         )
@@ -160,29 +182,49 @@ optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate, weight_decay=1
 
 #print(len(custom_dataloader.dataset))#-----------------102464
 for epoch in range(num_epochs):
-    for index,data in enumerate(custom_dataloader):
-        features_of_a_batch, labels = data
+    for index,data in enumerate(custom_training_dataloader):
+        features_of_a_training_batch, training_labels = data
         #print(len(features)) gives 64 which is the batch size
         #print(len(features[0])) gives 40 which is the dimension of the state space
-        features_of_a_batch = Variable(features_of_a_batch).cuda()
+        features_of_a_training_batch = Variable(features_of_a_training_batch).cuda()
         # ----------------------------------------------forward
-        output = model(features_of_a_batch)
+        training_output = model(features_of_a_training_batch)
         #check how good the model was at the end of every epoch
-        if(index == len(custom_dataloader)-1):
-            print("In the original data, 1st element of the last batch: ",features_of_a_batch[1])
-            print("Predicted Values to compare: ",output[1])
+        if(index == len(custom_training_dataloader)-1):
+            print("For Training Data: \n")
+            print("In the original data, 1st element of the last batch: ",features_of_a_training_batch[1])
+            print("Predicted Values to compare: ",training_output[1])
 
 
-        loss = criterion(output, features_of_a_batch)#------------------take care of the order of the output and the sample
+        training_loss = criterion(training_output, features_of_a_training_batch)#------------------take care of the order of the output and the sample
 
         # ----------------------------------------------backward
         optimizer.zero_grad()
-        loss.backward()
+        training_loss.backward()
         optimizer.step()
     # ===================log========================
 
-    #-----------------------------Check how good you are doing after every epoch
+    #-----------------------------Check how good you are doing after every epoch with testing data
+    for index,data in enumerate(custom_testing_dataloader):
+        features_of_a_testing_batch, labels = data
 
-    print('epoch [{}/{}], loss:{:.4f}'.format(epoch + 1, num_epochs, loss.data.item()))
+        features_of_a_testing_batch = Variable(features_of_a_testing_batch).cuda()
+        # ----------------------------------------------forward
+        testing_output = model(features_of_a_testing_batch)
+        if(index == len(custom_testing_dataloader)-1):
+            print("For Testing Data:\n")
+            print("In the original data, 1st element of the last batch: ",features_of_a_testing_batch[1])
+            print("Predicted Values to compare: ",testing_output[1])
 
-torch.save(model.state_dict(), './vanilla_autoencoder_for_rd.pth')
+
+        testing_loss = criterion(testing_output, features_of_a_testing_batch)#------------------take care of the order of the output and the sample
+
+
+
+
+    #Testing Code here
+    #-------------------------------------------------------------------------------
+    print("epoch [{}/{}], ".format(epoch+1,num_epochs))
+    print('Training loss:{:.4f}'.format(training_loss.data.item()))
+    print('Testing loss:{:.4f}'.format(testing_loss.data.item()))
+#torch.save(model.state_dict(), './autoencoder.pth')
