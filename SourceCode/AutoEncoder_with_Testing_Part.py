@@ -176,6 +176,7 @@ for epoch in range(num_epochs):
         features_of_a_training_batch, training_labels = data
 
 
+
         #print(len(features)) gives 64 which is the batch size
         #print(len(features[0])) gives 40 which is the dimension of the state space
         features_of_a_training_batch = Variable(features_of_a_training_batch).cuda()
@@ -192,7 +193,7 @@ for epoch in range(num_epochs):
             print("In the original data, 1st element of the last batch: ",features_of_a_training_batch[1])
             print("Predicted Values to compare: ",training_output[1])
 
-        training_loss_per_batch = criterion(training_output, features_of_a_training_batch.cpu())#by default, gives the mean of each elements within a sample
+        training_loss_per_batch = criterion(training_output, features_of_a_training_batch)#by default, gives the mean of each elements within a sample
         running_training_loss_cumulative_for_epoch = running_training_loss_cumulative_for_epoch + training_loss_per_batch
 
         # ----------------------------------------------backward
@@ -204,6 +205,8 @@ for epoch in range(num_epochs):
     for index,data in enumerate(custom_testing_dataloader):
         features_of_a_testing_batch, labels = data
 
+        print(len(features_of_a_testing_batch))
+        time.sleep(222)
         features_of_a_testing_batch = Variable(features_of_a_testing_batch).cuda()
         # ----------------------------------------------forward
         testing_output = model(features_of_a_testing_batch)
